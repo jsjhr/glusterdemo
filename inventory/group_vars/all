@@ -1,0 +1,49 @@
+gluster_mount_dir: /persistent_storage
+gluster_brick_dir: /srv/gluster/brick
+gluster_brick_name: gluster
+gluster_node_1: gluster1.lab.example.com
+gluster_node_2: gluster2.lab.example.com
+
+gluster_brick_config:
+  "replica 2 transport tcp
+  {{ groups.webservers[0] }}:{{ gluster_brick_dir }}
+  {{ groups.webservers[1] }}:{{ gluster_brick_dir }}"
+
+volume_group_gluster: vg_gluster
+
+lvols:
+  - name: persistent_storage
+    size: 20G
+    mount_point: /bricks/persistent_storage
+    dev: /dev/vg_gluster/persistent_storage
+#  - name: persistent_storage_lock
+#    size: 4G
+#    mount_point: /bricks/persistent_storage_lock
+#    dev: /dev/vg_gluster/persistent_storage_lock
+
+brick_persistent_storage:
+  name: brick_persistent_storage
+  path: /bricks/persistent_storage/brick
+
+brick_persistent_storage_lock:
+  name: brick_persistent_storage_lock
+  path: /bricks/persistent_storage_lock/brick
+
+gluster_volume_lock: "{{ brick_persistent_storage_lock.name }}"
+gluster_volume: "{{ brick_persistent_storage.name }}"
+
+#gluster_config_files:
+#  - name: S29CTDBsetup.sh.j2
+#    path: /var/lib/glusterd/hooks/1/start/post/S29CTDBsetup.sh
+#  - name: S29CTDBsetup.sh.j2
+#    path: /var/lib/glusterd/hooks/1/stop/pre/S29CTDB-teardown.sh 
+
+#ctdb_files:
+#  - name: nodes.j2
+#    path: /etc/ctdb/nodes
+#  - name: public_addresses.j2
+#    path: /etc/ctdb/public_addresses
+
+#ctdb_floating_ip: 192.168.100.100/24
+#ctdb_fqdn: gluster.lab.example.com
+#ctdb_interface: eth1

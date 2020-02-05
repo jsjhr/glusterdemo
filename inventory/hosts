@@ -1,0 +1,5 @@
+[ALM-Pandora.GlusterFS]
+192.168.100.20
+192.168.100.30
+[ALM-Pandora.GlusterFS.Client]
+192.168.100.40
