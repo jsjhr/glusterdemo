@@ -1,0 +1,19 @@
+---
+- name: Install Client GlusterFS
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - glusterfs-client
+    - glusterfs
+    - glusterfs-fuse
+  become: true
+
+- name: Mount logical volumes
+  mount:
+    path: "{{ gluster_mount_dir }}"
+    src: "{{ gluster_node_1 }}:/{{ gluster_volume }}"
+    fstype: glusterfs
+    opts: "_netdev,backup-volfile-servers={{ gluster_node_2 }}"
+    state: mounted
+  become: true 

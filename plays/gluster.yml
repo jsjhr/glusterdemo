@@ -1,0 +1,6 @@
+---
+- hosts: ALM-Pandora.GlusterFS 
+  gather_facts: no
+  roles:
+    - { role: glusterfs,
+        tags: [ 'glusterfs', 'gluster' ] }

@@ -1,0 +1,79 @@
+---
+- name: Install ctdb & redhat-storage-server
+  yum:
+    name: "{{ item }}"
+    state: present
+  become: true
+  loop:
+    - ctdb
+    - redhat-storage-server
+
+- name: Start and enable service
+  service:
+    name: glusterd
+    state: started
+    enabled: true
+  become: true
+
+- name: Connect to Gluster peers.
+  shell: "gluster peer probe {{ item }}"
+  register: gluster_peer_probe
+  changed_when: "'already in peer list' not in gluster_peer_probe.stdout"
+  failed_when: false
+  loop: "{{ groups['ALM-Pandora.GlusterFS'] }}"
+  become: true
+
+- name: Create logical volumes 
+  lvol:
+    vg: "{{ volume_group_gluster }}" 
+    lv: "{{ item.name }}"
+    size: "{{ item.size }}"
+  loop: "{{ lvols }}" 
+  become: true
+
+- name: format logical volumes with xfs
+  filesystem:
+    fstype: xfs
+    dev: "{{ item.dev }}"
+    opts: -f -i size=512 -n size=8192 -d su=128k,sw=10
+  loop: "{{ lvols }}"
+  become: true  
+
+- name: Mount logical volumes
+  mount:
+    path: "{{ item.mount_point }}"
+    src: "{{ item.dev }}"
+    fstype: xfs
+    opts: defaults
+    state: present 
+  loop: "{{ lvols }}"
+  become: true
+
+- name: Create mount_points
+  file:
+    path: "{{ item.mount_point }}"
+    state: directory
+  loop: "{{ lvols }}"
+  become: true
+
+- name: Mount all
+  shell: mount -a
+  become: true
+
+- name: Create directory for bricks
+  file:
+    path: "{{ item.mount_point }}/brick"
+    state: directory
+  loop: "{{ lvols }}"
+  become: true
+
+- name: create gluster volume with multiple bricks
+  gluster_volume:
+    state: present
+    name: test2
+#    bricks: /bricks/brick1/g2,/bricks/brick2/g2
+#    cluster:
+#      - 192.0.2.10
+#      - 192.0.2.11
+#  run_once: true
+#- name: Create volume

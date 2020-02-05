@@ -1,0 +1,139 @@
+---
+- name: Install ctdb & redhat-storage-server
+  yum:
+    name: "{{ item }}"
+    state: present
+  become: true
+  loop:
+#    - ctdb
+    - redhat-storage-server
+#    - samba
+
+## SE HAN COMENTADO TASKS QUE CORRESPONDEN A LA CONFIGURACION DE UN VOLUMEN DISTRIBUIDO
+## CON SOPORTE PARA SAMBA, CTDB NO ES NECESARIO PARA UN ESQUEMA DONDE SE USE CLIENTE NATIVO
+
+- name: Start and enable service
+  service:
+    name: glusterd
+    state: started
+    enabled: true
+  become: true
+
+- name: Connect to Gluster peers.
+  shell: "gluster peer probe {{ item }}"
+  register: gluster_peer_probe
+  changed_when: "'already in peer list' not in gluster_peer_probe.stdout"
+  failed_when: false
+  loop: "{{ groups['ALM-Pandora.GlusterFS'] }}"
+  become: true
+
+- name: Create logical volumes 
+  lvol:
+    vg: "{{ volume_group_gluster }}" 
+    lv: "{{ item.name }}"
+    size: "{{ item.size }}"
+  loop: "{{ lvols }}" 
+  become: true
+
+- name: format logical volumes with xfs
+  filesystem:
+    fstype: xfs
+    dev: "{{ item.dev }}"
+    opts: -f -i size=512 -n size=8192 -d su=128k,sw=10
+  loop: "{{ lvols }}"
+  become: true  
+
+- name: Mount logical volumes
+  mount:
+    path: "{{ item.mount_point }}"
+    src: "{{ item.dev }}"
+    fstype: xfs
+    opts: defaults
+    state: mounted 
+  loop: "{{ lvols }}"
+  become: true
+
+- name: Create mount_points
+  file:
+    path: "{{ item.mount_point }}"
+    state: directory
+  loop: "{{ lvols }}"
+  become: true
+
+- name: Create directory for bricks
+  file:
+    path: "{{ item.mount_point }}/brick"
+    state: directory
+  loop: "{{ lvols }}"
+  become: true
+
+- name: create gluster volume with multiple bricks
+  gluster_volume:
+    state: present
+    replicas: 2
+    name: "{{ brick_persistent_storage.name }}" 
+    bricks: "{{ brick_persistent_storage.path }}" 
+    cluster: "{{ groups['ALM-Pandora.GlusterFS'] }}"
+    force: true
+    start_on_create: no
+  run_once: true
+  become: true
+
+#- name: create lock gluster volume with multiple bricks
+#  gluster_volume:
+#    state: present
+#    replicas: 2
+#    name: "{{ brick_persistent_storage_lock.name }}"
+#    bricks: "{{ brick_persistent_storage_lock.path }}"
+#    cluster: "{{ groups['ALM-Pandora.GlusterFS'] }}"
+#    force: true
+#    start_on_create: no
+#  run_once: true
+#  become: true
+
+#- name: Config Files gluster lock volume
+#  template:
+#    src: "{{ item.name }}"
+#    dest: "{{ item.path }}"
+#  loop: "{{ gluster_config_files }}"
+#  become: true
+
+#- name: Start gluster volume lock
+#  gluster_volume:
+#    state: started
+#    name: "{{ gluster_volume_lock }}"
+#  run_once: true
+#  become: true 
+
+#- name: Config Files CTDB
+#  template:
+#    src: "{{ item.name }}"
+#    dest: "{{ item.path }}"
+#  loop: "{{ ctdb_files }}"
+#  become: true
+
+#- name: Configure Volume for Clustering
+#  shell: gluster volume set "{{ gluster_volume }}" stat-prefetch off && gluster volume set "{{ gluster_volume }}" server.allow-insecure on && gluster volume set "{{ gluster_volume }}" storage.batch-fsync-delay-usec 0
+#  run_once: true
+#  become: true
+
+- name: Start gluster volume
+  gluster_volume:
+    state: started
+    name: "{{ gluster_volume }}"
+  run_once: true
+  become: true
+
+- name: Restart glusterd
+  service:
+    name: glusterd
+    state: restarted
+  become: true
+
+#- name: Start and enable ctdb
+#  service:
+#    name: ctdb
+#    state: restarted
+#    enabled: true
+#  become: true
+
