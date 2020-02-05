@@ -22,5 +22,6 @@ Requisitos adicionales
 - Crecer el FS. El crecimiento debera ser en caliente, sin necesidad de ventana.
 - Pruebas desconectando uno de los nodos y validar la disponibilidad del servicio.
 - Validar la gestion de permisos de usuario. (hacer pruebas)
-- Levantar un APP contenerizado que use el storage.
+- Levantar un APP contenerizado que use storage NFS.
+- Migrar el NFS a Gluster para documentar el proceso (permisos etc) y hacer pruebas de disponibilidad
 
