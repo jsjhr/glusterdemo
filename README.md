@@ -16,5 +16,8 @@ Requisitos adicionales
 
 Pruebas a realizar
 
- - Crecer el FS. El crecimiento debera ser en caliente, sin necesidad de ventana.
- - Pruebas desconectando uno de los nodos y validar la disponibilidad del servicio.
+* Crecer el FS. El crecimiento debera ser en caliente, sin necesidad de ventana.
+* Pruebas desconectando uno de los nodos y validar la disponibilidad del servicio.
+* Validar la gestion de permisos de usuario. (hacer pruebas)
+* Levantar un APP contenerizado que use el storage.
+
