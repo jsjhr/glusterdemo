@@ -14,7 +14,10 @@ Requisitos adicionales
 *** Crear en el storage una particion con formato LVM
 *** Crear un grupo de volumenes
 
-Pruebas a realizar
+* Automatizacion *
+* Crear dos plays con sus roles respectivos en el formato de los playbooks de ALM Pandora.
+
+* Pruebas a realizar *
 
 * Crecer el FS. El crecimiento debera ser en caliente, sin necesidad de ventana.
 * Pruebas desconectando uno de los nodos y validar la disponibilidad del servicio.
